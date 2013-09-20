@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009" 
+			   xmlns:s="library://ns.adobe.com/flex/spark" 
+			   xmlns:mx="library://ns.adobe.com/flex/mx" minWidth="1024" minHeight="768" initialize="init()" backgroundAlpha="0">
+	<fx:Script>
+		<![CDATA[
+			import com.LOX.HomePage.Card;
+			
+			import mx.core.UIComponent;
+			
+			import away3d.cameras.Camera3D;
+			import away3d.cameras.lenses.PerspectiveLens;
+			import away3d.containers.View3D;
+			import away3d.entities.Mesh;
+			import away3d.events.MouseEvent3D;
+			import away3d.lights.DirectionalLight;
+			import away3d.lights.shadowmaps.NearDirectionalShadowMapper;
+			import away3d.materials.ColorMaterial;
+			import away3d.materials.lightpickers.StaticLightPicker;
+			import away3d.materials.methods.NearShadowMapMethod;
+			import away3d.materials.methods.SoftShadowMapMethod;
+			import away3d.primitives.PlaneGeometry;
+			import away3d.textures.BitmapTexture;
+			[Embed(source="resources/images/01.jpg")]
+			public static var Pic1:Class;
+			[Embed(source="resources/images/02.jpg")]
+			public static var Pic2:Class;
+			[Embed(source="resources/images/03.jpg")]
+			public static var Pic3:Class;
+			[Embed(source="resources/images/04.jpg")]
+			public static var Pic4:Class;
+			
+			private var view:View3D;
+			private var testObj:Card;
+			private var backPlan:Mesh;
+			
+			private var cMenu:ContextMenu;
+			private var ifOpen:Boolean = false;
+			
+			private function init():void
+			{
+				this.addEventListener(Event.ENTER_FRAME, OnInitializing);
+			}
+			private function OnInitializing(e:Event):void
+			{
+				if(stage != null && stage.stageHeight >0 && stage.stageHeight >0)
+				{
+					this.removeEventListener(Event.ENTER_FRAME, OnInitializing);
+					
+					stage.scaleMode = StageScaleMode.NO_SCALE;
+					stage.align = StageAlign.TOP_LEFT;
+					
+					initScene();
+				}
+			}
+			private function initScene():void
+			{
+				var main:UIComponent = new UIComponent();
+				this.addElement(main);
+				
+				cMenu= new ContextMenu();
+				cMenu.hideBuiltInItems();
+				view = new View3D();
+				view.backgroundColor = 0xCCCCCC;
+				view.contextMenu = cMenu;
+				
+				main.addChild(view);
+				var len:PerspectiveLens = new PerspectiveLens(25);
+				
+				view.camera = new Camera3D(len);
+				view.camera.z = -800;
+				view.camera.lookAt(new Vector3D())
+				view.mouseEnabled = true;
+				
+				var dl:DirectionalLight = new DirectionalLight(0.5,-0.5,1);
+				dl.color = 0xFFFFFF;
+				dl.specular = 1.5;
+				dl.castsShadows = true;
+				dl.shadowMapper = new NearDirectionalShadowMapper();
+				view.scene.addChild(dl);
+				
+				var bM:ColorMaterial = new ColorMaterial(0xCCCCCC);
+				bM.lightPicker = new StaticLightPicker([dl]);
+				bM.shadowMethod = new NearShadowMapMethod(new SoftShadowMapMethod(dl,50,10),1);
+				backPlan = new Mesh(new PlaneGeometry(1000,1000), bM);
+				backPlan.z = 50;
+				backPlan.rotationX = -90;
+				
+				view.scene.addChild(backPlan);
+				
+				testObj = new Card(320,200, new BitmapTexture( new Pic1().bitmapData),new BitmapTexture( new Pic2().bitmapData),
+					new BitmapTexture( new Pic3().bitmapData),new BitmapTexture( new Pic4().bitmapData),dl);
+				view.scene.addChild(testObj);
+				
+				testObj.addEventListener(MouseEvent3D.MOUSE_UP,OnCardClick);
+				
+				this.addEventListener(Event.ENTER_FRAME, OnRendering);
+				stage.addEventListener(Event.RESIZE, OnResized);
+				OnResized(null);
+			}
+			private function OnCardClick(e:MouseEvent3D):void
+			{
+				if(!ifOpen)
+					testObj.openCard();
+				else
+					testObj.closeCard();
+				ifOpen = ! ifOpen;
+			}
+			private function OnRendering(e:Event):void
+			{
+				view.render();
+			}
+			private function OnResized(e:Event):void
+			{
+				view.width = stage.stageWidth;
+				view.height = stage.stageHeight;
+			}
+		]]>
+	</fx:Script>
+</s:Application>
